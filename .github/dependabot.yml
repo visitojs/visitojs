@@ -16,6 +16,10 @@ updates:
     ignore:
       # moves together with the image tag and digest in .github/workflows/ci.yml and lab/containers/browsers.Dockerfile
       - dependency-name: playwright
+      # TypeScript 7 no longer compiles to ES5 (tsc 7.0.2: "Option 'target=ES5' has been removed"), and the library ships ES5:
+      # a move to 7 is a decision about the build, not an update
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

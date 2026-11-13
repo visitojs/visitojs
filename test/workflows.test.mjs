@@ -433,5 +433,9 @@ test('Dependabot waits a week before proposing a new release and groups the upda
     assert.ok(update.cooldown && update.cooldown['default-days'] >= 7, update['package-ecosystem'])
     assert.ok(Object.keys(update.groups || {}).length, update['package-ecosystem'])
   }
-  assert.deepEqual(updates.find((update) => update['package-ecosystem'] === 'npm').ignore, [{ 'dependency-name': 'playwright' }])
+  // playwright moves with its image; a major TypeScript is left alone because 7 no longer compiles to ES5
+  assert.deepEqual(updates.find((update) => update['package-ecosystem'] === 'npm').ignore, [
+    { 'dependency-name': 'playwright' },
+    { 'dependency-name': 'typescript', 'update-types': ['version-update:semver-major'] },
+  ])
 })
