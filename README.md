@@ -1,4 +1,9 @@
-<h1 align="center">VisitoJS</h1>
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/visitojs/visitojs/main/.github/brand/logo-dark-624.png">
+    <img src="https://raw.githubusercontent.com/visitojs/visitojs/main/.github/brand/logo-light-624.png" alt="VisitoJS" width="312">
+  </picture>
+</h1>
 
 <p align="center">
   <strong>Device identification for the browser, in one small script that makes no network requests.</strong>
@@ -6,7 +11,7 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/visitojs"><img src="https://img.shields.io/npm/v/visitojs.svg" alt="npm version"></a>
-  <a href="https://bundlephobia.com/package/visitojs"><img src="https://img.shields.io/bundlephobia/minzip/visitojs.svg" alt="minified and gzipped size"></a>
+  <a href="#entries"><img src="https://img.shields.io/badge/gzip-7.5%20kB-0B6E5C" alt="7,460 bytes gzipped"></a>
   <a href="LICENSE"><img src="https://img.shields.io/npm/l/visitojs.svg" alt="MIT license"></a>
   <a href="https://www.npmjs.com/package/visitojs"><img src="https://img.shields.io/npm/types/visitojs.svg" alt="TypeScript types included"></a>
   <a href="https://www.jsdelivr.com/package/npm/visitojs"><img src="https://img.shields.io/jsdelivr/npm/hm/visitojs.svg" alt="jsDelivr hits per month"></a>

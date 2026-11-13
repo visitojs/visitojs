@@ -36,8 +36,27 @@ test('a change to the old-engines harness or to the CI wiring runs the old engin
   }
 })
 
-test('a change to tests, other harnesses, the demo or another workflow runs the browser harnesses but not the old engines', () => {
-  for (const path of ['test/ua.test.mjs', 'lab/fault-matrix.mjs', 'lab/testpage/index.html', 'demo/index.html', '.github/workflows/pages.yml', '.gitignore', 'some-new-file']) {
+test('brand files, the demo site and images on their own need neither the browser harnesses nor the old engines', () => {
+  assert.deepEqual(classify(['.github/brand/logo-light-624.png', '.github/brand/logo-dark-624.png']), none)
+  assert.deepEqual(classify(['demo/index.html', 'demo/llms.txt', 'demo/favicon.ico', 'demo/favicon-32.png', 'demo/social-preview.png']), none)
+  assert.deepEqual(classify(['docs/img/flow.png', 'icon.ico', 'art/mark.svg']), none)
+})
+
+test('an image where the build, a test or a harness can read it still counts as code', () => {
+  assert.deepEqual(classify(['src/mark.svg']), all)
+  for (const path of ['test/fixtures/canvas.png', 'lab/testpage/public/icon.png', 'lab/report/raw/demo.png']) {
+    assert.deepEqual(classify([path]), { code: true, oldEngines: false }, path)
+  }
+})
+
+test('with the site or brand files, the other paths decide as before', () => {
+  assert.deepEqual(classify(['demo/index.html', 'src/reads.ts']), all)
+  assert.deepEqual(classify(['.github/brand/logo-light-624.png', 'lab/demo.mjs']), { code: true, oldEngines: false })
+  assert.deepEqual(classify(['demo/index.html', '.github/workflows/pages.yml']), { code: true, oldEngines: false })
+})
+
+test('a change to tests, other harnesses or another workflow runs the browser harnesses but not the old engines', () => {
+  for (const path of ['test/ua.test.mjs', 'test/site.test.mjs', 'lab/fault-matrix.mjs', 'lab/demo.mjs', 'lab/testpage/index.html', '.github/workflows/pages.yml', '.gitignore', 'some-new-file']) {
     assert.deepEqual(classify([path]), { code: true, oldEngines: false }, path)
   }
 })

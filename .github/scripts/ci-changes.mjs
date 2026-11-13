@@ -4,8 +4,13 @@ import { appendFileSync, readFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import { pathToFileURL } from 'node:url'
 
+// The demo site, the brand files and images on their own count as documentation. The only browser harness that loads the site is
+// lab/demo.mjs, which the author runs locally; the site's other checks are in test/site.test.mjs, which the unit job runs on every
+// change. An image under src/, test/ or lab/ stays code: the build, a test or a harness may read it
+const SITE = [/^demo\//, /^\.github\/brand\//, /^(?!(src|test|lab)\/).*\.(png|ico|svg)$/]
+
 // Files no browser harness reads and no build step uses. Anything else, including a file added tomorrow, counts as code
-const DOCS = [/\.md$/, /^docs\//, /^LICENSE$/, /^third_party\//, /^\.github\/ISSUE_TEMPLATE\//, /^\.github\/CODEOWNERS$/, /^\.github\/dependabot\.yml$/]
+const DOCS = [/\.md$/, /^docs\//, /^LICENSE$/, /^third_party\//, /^\.github\/ISSUE_TEMPLATE\//, /^\.github\/CODEOWNERS$/, /^\.github\/dependabot\.yml$/, ...SITE]
 
 // What can change the shipped bytes in Chrome 53 to 80 or the run that checks them. .npmrc and .gitattributes change what npm
 // runs and the line endings of src/. The last three are the wiring that starts the run
