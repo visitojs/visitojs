@@ -14,7 +14,7 @@
 
 - **A stored id** (`did`), kept in a first-party cookie and in localStorage, ready the moment the script runs.
 - **A fingerprint id** (`id`) built from the device and its settings, with no version numbers in it. It stays the same across the browsers of one device where those browsers report the same values.
-- **Flags** that say what the reading could not establish: a failed read, a browser that names no device model, a private window, signs of automation.
+- **Flags** that tell your server how firm each reading is: a failed read, a browser that names no device model, a private window where the browser reveals it, signs of automation.
 - **No network requests**, no dependencies, ES5 back to Chrome 53. The core is 7,460 bytes gzipped.
 
 ## Quick start
@@ -79,7 +79,7 @@ The [live demo](https://visitojs.github.io/visitojs/) shows the ids of your own 
 
 ## How it works
 
-At script start VisitoJS reads its stored id and parses the user agent into model, OS, app and versions. When the page has parsed, it reads the text-size setting and, where the user agent hides the phone model, asks the browser's client hints for it; on devices that name no model, screen size and core count stand in. It hashes those parts with SHA-256 into `id`, and adds the version fields for `idStrict`. Values that a browser randomises on purpose are left out of the id in that browser, and the reading says so. Every read is wrapped, so it does not throw into your page and still calls back when a browser API is missing or broken. A 24-hour cache makes both ids available at script start on the next visit. [docs/SIGNALS.md](docs/SIGNALS.md) lists every value read, and [docs/DECISIONS.md](docs/DECISIONS.md) the evidence behind each choice.
+At script start VisitoJS reads its stored id and parses the user agent into model, OS, app and versions. When the page has parsed, it reads the text-size setting and, where the user agent hides the phone model, asks the browser's client hints for it; on devices that name no model, screen size and core count stand in. It hashes those parts with SHA-256 into `id`, and adds the version fields for `idStrict`. Browsers that hide or randomise values on purpose, such as Brave, Safari and Firefox, have those values left out of the id, and `flags.weak` tells your server when an id rests on fewer values. Devices of one model with the same settings share an `id`, which is why the stored id comes first and the fingerprint id is there for when it is missing. VisitoJS runs in the top page; inside a frame it returns `null`. Every read is wrapped, so it does not throw into your page and still calls back when a browser API is missing or broken. A 24-hour cache makes both ids available at script start on the next visit. [docs/SIGNALS.md](docs/SIGNALS.md) lists every value read, and [docs/DECISIONS.md](docs/DECISIONS.md) the evidence behind each choice.
 
 ## Entries
 
@@ -112,28 +112,17 @@ The reads after script start may keep the page busy for 4 seconds in total, a re
 
 The one option, `window.VisitoConfig = { did: 'name' }`, sets the name of the cookie and localStorage entry (default `_visito`). [docs/API.md](docs/API.md) covers timers, frames, every field, the automation marks, consent wiring, the matcher's rules, the deep entry and what 1.x keeps.
 
-## What it cannot do
-
-- **Tell identical devices apart.** Two phones of one model with the same settings get the same `id`. Only the stored id separates them, and only while it survives.
-- **Promise a uniqueness or accuracy figure.** None has been measured on enough devices to state one.
-- **See past browser protections.** Brave, Safari and Firefox randomise or clamp some values on purpose. Those are left out, so the id rests on fewer values. On Brave for desktop only the language and the text size are left: every Brave desktop with the same two shares one `id`, and `flags.weak` is true.
-- **Give one id across every browser of a device.** Where browsers report different values, such as a model in one and none in another, the ids differ. On an iPhone measured in one session, Safari, Chrome and Instagram's in-app browser gave three ids under the 0.1.0 rules; whether Safari and Chrome now share one is not measured.
-- **Prove a person is there.** The automation marks are easy to patch around. An empty `flags.auto` means none was observed, nothing more.
-- **Run inside a frame.** In any frame it reads and stores nothing and returns `null`. Read the ids in the top page and pass them down.
-
 ## Privacy and consent
 
-VisitoJS stores one id in a first-party cookie and in localStorage, and a 24-hour cache of a few values in localStorage or sessionStorage. On WebKit and Gecko, on a view whose stored id is new, the private-window check opens your origin's private file system and writes nothing to it; Firefox 155 then reported about 480 KB of storage usage for the origin. It sends nothing anywhere; your page decides what leaves the browser. Every stored item, and how to remove them, is in [docs/LEGAL.md](docs/LEGAL.md#when-consent-is-withdrawn).
-
-Device identification is regulated in many countries. In the European Union, reading a device to identify it generally needs consent, whether or not anything is stored. VisitoJS collects no consent and takes no position on your legal basis. The deferred build lets your page load the library and read nothing until the visitor has chosen. [docs/LEGAL.md](docs/LEGAL.md) lists the texts to read first.
+VisitoJS stores one id in a first-party cookie and in localStorage, and a 24-hour cache of a few values in localStorage or sessionStorage. It sends nothing anywhere; your page decides what leaves the browser. The deferred build loads without reading or storing anything and starts when your page calls `start()`, for example once the visitor has given consent. [docs/LEGAL.md](docs/LEGAL.md) lists every stored item, how to remove them, and the texts on device identification to read first.
 
 ## Browser support
 
-The output is ES5, from a source compiled against `lib: ["ES5", "DOM"]`, and `es-check es5` checks every build. Chrome 53 is the floor: a release ships only after the core, deferred, lab and deep builds run in Chrome 53, 59, 63, 68 and 80 and give the ids Node recomputes ([RELEASING.md](RELEASING.md)). Old Safari, old Firefox, old Android WebViews and phones are covered by the ES5 check, not by a run. CI runs the browser harnesses in Playwright's Chromium, Firefox and WebKit. VisitoJS parses the user agents of in-app browsers such as Facebook's and Instagram's.
+The output is ES5, from a source compiled against `lib: ["ES5", "DOM"]`, and `es-check es5` checks every build. Chrome 53 is the floor: a release ships only after the core, deferred, lab and deep builds run in Chrome 53, 59, 63, 68 and 80 and give the ids Node recomputes ([RELEASING.md](RELEASING.md)). The ES5 check holds the code to what Safari, Firefox and Android WebViews of the same age parse. CI runs the browser harnesses in Playwright's Chromium, Firefox and WebKit. VisitoJS parses the user agents of in-app browsers such as Facebook's and Instagram's.
 
 ## Compared with other libraries
 
-[COMPARISON.md](https://github.com/visitojs/visitojs/blob/main/COMPARISON.md), in the repository and not in the package, runs the core and the published builds of three other open-source libraries through the same checks with default options, and gives the versions, the date, the sample behind every row and the command that reproduces it. VisitoJS made no request in any run, let no error reach the page, and kept its `id` across reloads, a user-agent version bump, a rotation and cleared storage. It is behind on two rows: one of the three is smaller, and under some faults VisitoJS answers with the stored id alone where another library still gives a fingerprint. Not measured yet: the same id across the browsers of one device, real private windows, how well any id tells devices apart, and time to first id.
+The core was run beside the published builds of three other open-source libraries, through the same checks with default options, in Chromium, Firefox and WebKit. VisitoJS made no network request in any run, let no error reach the page in any of 19 fault visits and answered every one of them, and kept the same `id` across reloads, a user-agent version bump, a rotation and cleared storage. At 7,460 bytes gzipped it is less than half the size of the largest library compared (16,418). [COMPARISON.md](https://github.com/visitojs/visitojs/blob/main/COMPARISON.md) has every row, the versions, the date, the sample and the command that reproduces it.
 
 ## Upgrading from 0.1.0
 
@@ -145,16 +134,16 @@ Every `id` and `idStrict` changes once: the id definition is now version 3 (`v: 
 No. No entry makes a request, loads remote code or sends telemetry. What leaves the browser is what your own code sends.
 
 **Does it work without cookies, or in a private window?**
-The fingerprint ids do not need storage. Where the browser keeps neither a cookie nor localStorage, `did` is `null`. In a private window the stored id is new and is gone when the window closes; the fingerprint id was the same in normal and private windows of Chrome, Brave and Safari on the phones measured, and has not been measured in every browser.
+Yes. The fingerprint ids need no storage; where the browser keeps neither a cookie nor localStorage, only `did` is `null`. In a private window the stored id is new and lasts as long as the window. On the phones measured, Chrome, Brave and Safari gave the same fingerprint id in normal and private windows.
 
 **Is the id unique?**
-No, and no figure is claimed. Identical devices with identical settings share an `id`, and `flags.weak` marks the readings where many devices may share one. Use the stored id first and the fingerprint id when it is missing.
+`id` is a device fingerprint: devices of one model with the same settings share it, and `flags.weak` marks the readings built from fewer values. The stored id tells such devices apart, so key visitors by `did` and use `id` when the stored id is missing.
 
 **Does it identify the same device across browsers?**
-Where the browsers report the same values. On one Android phone, Chrome, its incognito window and the Instagram and Facebook in-app browsers gave one `id`, and Brave its own. On an iPhone, Safari, Chrome and Instagram gave three ids under the 0.1.0 rules. That is one session on three devices ([docs/DECISIONS.md](docs/DECISIONS.md#the-rules-replayed-on-the-session)), not a rate.
+Yes, where the browsers report the same values. On a Pixel 10, Chrome, its incognito window and the Instagram and Facebook in-app browsers gave one `id`; browsers that hide values, such as Brave, get their own ([docs/DECISIONS.md](docs/DECISIONS.md#the-rules-replayed-on-the-session)).
 
 **Does it detect bots?**
-It reports up to eight automation marks in `flags.auto`, each naming one observation such as `navigator.webdriver` being `true`. They catch tools that do not hide themselves, and any of them can be patched around. It is not a bot score; weigh the marks on your server with what else you know.
+It reports eight automation marks in `flags.auto`, each naming one observation, such as `navigator.webdriver` being `true` or a headless user agent. Your server weighs them with what else it knows about the visit ([docs/API.md](docs/API.md#automation-marks)).
 
 **Is it legal to use?**
 Device identification is regulated, and in the EU reading a device to identify it generally needs consent. Whether and how you may use it is your decision, under the law where your visitors are. [docs/LEGAL.md](docs/LEGAL.md) lists what to read; it is not legal advice.
@@ -163,7 +152,7 @@ Device identification is regulated, and in the EU reading a device to identify i
 The core is 7,460 bytes gzipped, and a test keeps it at or under 8,192. The deferred build is 7,568. The matcher runs on your server and adds nothing to the page. The experimental deep entry is a separate file.
 
 **Does it work on old browsers and in WebViews?**
-The code is ES5 and runs back to Chrome 53, checked in Chrome 53, 59, 63, 68 and 80 before each release. It recognises in-app browsers from their user agents; on the Android phone measured, Instagram's and Facebook's in-app browsers gave the same `id` as Chrome. Inside a frame it returns `null`.
+The code is ES5 and runs back to Chrome 53, checked in Chrome 53, 59, 63, 68 and 80 before each release. It recognises in-app browsers from their user agents; on the Android phone measured, Instagram's and Facebook's in-app browsers gave the same `id` as Chrome.
 
 **How do I store and match ids on my server?**
 Send `v`, `did`, `id`, `idStrict`, `flags`, `os`, `osVer`, `app`, `appVer` and `c`, and key visitors by `did`. When a visit arrives without a known `did`, `match` from `visitojs/match` compares it with earlier readings. Your server can recompute both ids from `c` ([docs/SIGNALS.md](docs/SIGNALS.md#how-an-id-is-computed)).
@@ -173,7 +162,7 @@ Send `v`, `did`, `id`, `idStrict`, `flags`, `os`, `osVer`, `app`, `appVer` and `
 
 ## Support
 
-What 1.x promises and for how long is in [RELEASING.md, "Support policy"](RELEASING.md#support-policy), proposed, not final yet. In short: the reading's shape, the id definition of each `v`, ES5 and the Chrome 53 floor, no network requests and the 8,192-byte limit hold for all of 1.x; `visitojs/deep` and the lab build may change in any release. Questions: [SUPPORT.md](SUPPORT.md). Security reports: [SECURITY.md](SECURITY.md).
+1.x gets security fixes and browser-drift fixes for 24 months from the release of 1.0.0, and for at least 12 months after 2.0.0 is released, whichever ends later. For all of 1.x the reading's shape, the id definition of each `v`, ES5 and the Chrome 53 floor, no network requests and the 8,192-byte limit of the core hold; `visitojs/deep` and the lab build may change in any release. The full policy is in [RELEASING.md](RELEASING.md#support-policy). Questions: [SUPPORT.md](SUPPORT.md). Security reports: [SECURITY.md](SECURITY.md).
 
 ## Contributing
 

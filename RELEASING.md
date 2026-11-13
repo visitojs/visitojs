@@ -12,8 +12,6 @@ For maintainers. Nothing here runs by itself.
 
 ## Support policy
 
-Proposed, not final yet.
-
 ### What 1.x promises
 
 - The reading's shape. Every field listed under "What 1.x keeps" in [docs/API.md](docs/API.md#what-1x-keeps) keeps its name, type and meaning in every 1.x release. `test/types/consumer.ts` pins each type; a minor release may add fields and `x.` hints, never remove or retype one.
