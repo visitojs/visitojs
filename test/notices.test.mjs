@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { blockedFont, noticeFor } from '../lab/notices.mjs'
+import { blockedFont, fontsNotInControl, noticeFor } from '../lab/notices.mjs'
 
 // the console lines Playwright's Firefox 155 gave on Ubuntu 24.04 in CI, 13 November 2026
 const FROM_CI = [
@@ -41,4 +41,18 @@ test('the screen notice stays a notice and names no font', () => {
   const line = 'warning: Fingerprinting Protection is altering screen.availWidth and screen.availHeight.'
   assert.equal(noticeFor('firefox', line).name, 'screen-avail')
   assert.equal(blockedFont('firefox', line), null)
+})
+
+test('a font warned about with the library passes only if the launch that never loads the library was warned about it too', () => {
+  const control = ['WenQuanYi Zen Hei', 'WenQuanYi Zen Hei Mono', 'IPAGothic']
+  // the failing CI run: the default font's warning landed on a library page; against the dedicated control it is explained
+  assert.deepEqual(fontsNotInControl(['WenQuanYi Zen Hei', 'WenQuanYi Zen Hei Mono', 'IPAGothic', 'IPAGothic'], control), [])
+  assert.deepEqual(fontsNotInControl([], control), [])
+  assert.deepEqual(fontsNotInControl([], []), [])
+  // a font only the library is warned about fails, once, in the order first seen
+  assert.deepEqual(fontsNotInControl(['Noto Sans Mono', 'IPAGothic', 'Noto Sans Mono', 'DejaVu Sans'], control), ['Noto Sans Mono', 'DejaVu Sans'])
+  // a control that saw nothing explains nothing
+  assert.deepEqual(fontsNotInControl(['IPAGothic'], []), ['IPAGothic'])
+  // names are compared exactly
+  assert.deepEqual(fontsNotInControl(['ipagothic', 'IPAGothic '], control), ['ipagothic', 'IPAGothic '])
 })

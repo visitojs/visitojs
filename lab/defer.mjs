@@ -14,7 +14,7 @@
 import http from 'node:http'
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import * as playwright from 'playwright'
-import { blockedFont } from './notices.mjs'
+import { blockedFont, fontsNotInControl } from './notices.mjs'
 import { problems } from './schema.mjs'
 import { loadPage, stopOnPageLoad } from './launch.mjs'
 
@@ -112,8 +112,9 @@ const pages = {
   '/b': PAGE(`<script type="module">import { get, getSync, start } from '/visito.defer.esm.js'; window.Visito = { start: start, get: get, getSync: getSync }; ${QUEUE}</script>`),
   '/b-core': PAGE(`<script type="module">import { get, getSync } from '/visito.esm.js'; window.Visito = { get: get, getSync: getSync }; ${QUEUE}</script>`),
   '/blank': PAGE(SCRIPT('/empty.js')),
-  // /c-parse with no script: what the text-size read adds to the page, written as plain markup, the same nodes, styles and text
-  '/c-parse-plain': PAGE('') + PLAIN_PROBE,
+  // /c-parse with no script: text in the default font, and what the text-size read adds to the page as plain markup, the same
+  // nodes, styles and text
+  '/c-parse-plain': PAGE('') + '<p>mmmmmmmmmm</p>' + PLAIN_PROBE,
   '/core': PAGE(SCRIPT('/visito.min.js', QUEUE)),
   '/c-parse': PAGE(SCRIPT('/visito.defer.min.js', QUEUE + ';' + START())),
   '/c-ready': PAGE(SCRIPT('/visito.defer.min.js', QUEUE + `; document.addEventListener('DOMContentLoaded', function () { ${START()} })`)),
@@ -161,6 +162,39 @@ async function openPage(context, path) {
   })
   await loadPage(page, origin + path, { waitUntil: 'load' })
   return { page, log, finished }
+}
+/**
+ * The fonts Firefox warns about in a private launch where no page loads the library: /c-parse-plain in fresh contexts, at least
+ * three and, while `needed` (the fonts the library's pages were warned about) is not covered yet, up to six. The listener is on
+ * each context before its first page, so the initial about:blank is heard too, and it takes warnings from every document. More
+ * than one context, because each warning comes once per content process, from whichever document asks first, and that can be a
+ * document the listener does not hear in time; each fresh context is another chance, and the union is what any of them saw. A
+ * font that only the library makes Firefox look up is never in the union, however many contexts run.
+ */
+async function controlFonts(needed) {
+  const alone = await playwright.firefox.launch({ firefoxUserPrefs: { 'browser.privatebrowsing.autostart': true } })
+  const fonts = []
+  let contexts = 0
+  try {
+    for (; contexts < 6 && (contexts < 3 || fontsNotInControl(needed, fonts).length); contexts++) {
+      const context = await alone.newContext()
+      context.on('console', (message) => {
+        const font = blockedFont(engineName, `${message.type()}: ${message.text()}`)
+        if (font && fonts.indexOf(font) < 0) fonts.push(font)
+        else if (!font) errors.push(`/c-parse-plain (control): console ${message.type()}: ${message.text()}`)
+      })
+      const page = await context.newPage()
+      page.on('pageerror', (error) => errors.push(`/c-parse-plain (control): ${error.message}`))
+      await loadPage(page, origin + '/c-parse-plain', { waitUntil: 'load' })
+      // the harness reads what the library reads, so layout resolves the same families
+      await page.evaluate(() => { const n = document.getElementById('fixed'); return [getComputedStyle(n).fontSize, n.getBoundingClientRect().width, document.body.getBoundingClientRect().width] })
+      await page.waitForTimeout(500)
+      await context.close()
+    }
+  } finally {
+    await alone.close()
+  }
+  return { fonts, contexts }
 }
 const within = (promise, ms) => Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(null), ms))])
 
@@ -298,14 +332,6 @@ try {
   // (h) a private session: WebKit's default context is ephemeral; Firefox needs its private-browsing preference, in its own launch
   const privateRuns = engineName === 'webkit' ? [[browser, 'the default ephemeral context']] : engineName === 'firefox' ? [[await playwright.firefox.launch({ firefoxUserPrefs: { 'browser.privatebrowsing.autostart': true } }), 'private browsing (autostart)']] : []
   for (const [where, label] of privateRuns) {
-    // (j) first, while nothing in this launch has looked up a font: /c-parse without the library, the probe's nodes as markup, laid
-    // out by the harness's own reads of what the library reads
-    const context = await where.newContext()
-    await context.addInitScript(INSTRUMENT)
-    const view = await openPage(context, '/c-parse-plain')
-    await view.page.evaluate(() => { const n = document.getElementById('fixed'); return [getComputedStyle(n).fontSize, n.getBoundingClientRect().width] })
-    await view.page.waitForTimeout(500)
-    await context.close()
     for (const [path, expect] of [['/c-parse', true], ['/d', null]]) {
       const context = await where.newContext()
       await context.addInitScript(INSTRUMENT)
@@ -320,15 +346,17 @@ try {
   if (engineName === 'chromium') notes.push('(h) not applicable: Blink gives no private-window answer, so flags.private is null in both modes')
 
   // (j) Firefox lowers font visibility in private browsing (its fingerprinting protection, on there by default), so that is where it
-  // warns; every font it warned about on a library page, it must also have warned about on the same page without the library
-  const plain = new Set(ignored.filter((i) => i.path === '/c-parse-plain').map((i) => i.font))
-  const withLibrary = ignored.filter((i) => i.path !== '/c-parse-plain')
-  const fonts = [...new Set(withLibrary.map((i) => i.font))]
-  const only = fonts.filter((font) => !plain.has(font))
-  check('(j) every font-visibility warning skipped on a library page names a font the same page without the library is warned about too', !only.length, `only with the library: ${only.join(', ')}; without it: ${[...plain].join(', ') || 'none'}`)
-  notes.push(withLibrary.length
-    ? `ignored ${withLibrary.length} Firefox font-visibility warnings (${fonts.join(', ')}) on ${[...new Set(withLibrary.map((i) => i.path))].join(', ')}; /c-parse without the library: ${[...plain].join(', ') || 'none'}`
-    : `no font-visibility warning to ignore; /c-parse without the library: ${[...plain].join(', ') || 'none'}`)
+  // warns. It warns once per content process and generic family, against whichever document asks first, so which of the library's
+  // pages carries a warning is a race. The control is therefore a private launch of its own in which no page ever loads the library:
+  // every font it is warned about, from any document, is the set the library's fonts must fall in. A font warned about only with
+  // the library still fails the row.
+  if (engineName === 'firefox') {
+    const fonts = ignored.map((i) => i.font)
+    const { fonts: control, contexts } = await controlFonts(fonts)
+    const only = fontsNotInControl(fonts, control)
+    check('(j) every font-visibility warning skipped on a library page names a font a private launch that never loads the library is warned about too', !only.length, `only with the library: ${only.join(', ')}; without it: ${control.join(', ') || 'none'}`)
+    notes.push(`ignored ${ignored.length} Firefox font-visibility warnings (${[...new Set(fonts)].join(', ') || 'none'}) on ${[...new Set(ignored.map((i) => i.path))].join(', ') || 'no page'}; a private launch without the library, ${contexts} contexts: ${control.join(', ') || 'none'}`)
+  }
 
   check("nothing written to the console beyond Firefox's font-visibility warnings, and no page error", !errors.length, errors.slice(0, 5).join(' | '))
 } catch (error) {

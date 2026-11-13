@@ -26,3 +26,11 @@ export const blockedFont = (engine, line) => {
   const notice = noticeFor(engine, line)
   return notice && notice.name === 'font-visibility' ? notice.pattern.exec(line)[1] : null
 }
+
+/** The fonts in `warned` (the library's pages) that `control` (a launch that never loads the library) does not name, each once. */
+export const fontsNotInControl = (warned, control) => {
+  const known = new Set(control)
+  const out = []
+  for (const font of warned) if (!known.has(font) && out.indexOf(font) < 0) out.push(font)
+  return out
+}
