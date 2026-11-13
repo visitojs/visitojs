@@ -108,6 +108,12 @@ The logo, icons and preview image come from the brand kit and live in `.github/b
 - Say what you tested and on which browsers or devices.
 - Do not include readings, user agents or any other data from real users. Synthetic values with the same shape are fine.
 
+## Labels
+
+Every issue and pull request gets a kind (`bug`, `enhancement`, `documentation`, `performance`, `security`, `measurement`, `dependencies`), and where it helps an `area:` (`core`, `defer`, `deep`, `match`, `lab`, `ci`, `site`) and a `browser:` (`chrome`, `safari`, `firefox`, `brave`, `in-app`, `old engines`). `status:` says where it stands: `needs triage` on a new report, then `needs reproduction`, `needs device`, `confirmed` or `blocked`. A change to what an id is built from is labelled `id definition`, because it raises `ID_VERSION` and is called out in the changelog. `good first issue` and `help wanted` mark work that is ready for someone new.
+
+Questions and ideas start in [Discussions](https://github.com/visitojs/visitojs/discussions); an idea becomes an issue once it is clear what would be built and how it would be measured.
+
 ## License
 
 By contributing you agree that your contribution is licensed under the [MIT License](LICENSE) of this project.

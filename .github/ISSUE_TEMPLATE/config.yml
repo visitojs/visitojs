@@ -1,5 +1,11 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Question
+    url: https://github.com/visitojs/visitojs/discussions/new?category=q-a
+    about: How to use it, what a value means, whether something is expected. Ask in Discussions.
+  - name: Idea
+    url: https://github.com/visitojs/visitojs/discussions/new?category=ideas
+    about: Talk an idea through in Discussions before it becomes a feature request.
   - name: Security report
     url: https://github.com/visitojs/visitojs/security/advisories/new
     about: Report a vulnerability privately. Do not open a public issue for it.

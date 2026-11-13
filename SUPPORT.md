@@ -1,6 +1,6 @@
 # Getting help
 
-- **A question, or not sure it is a bug?** Ask in [Discussions](https://github.com/visitojs/visitojs/discussions).
+- **A question, or not sure it is a bug?** Ask in [Discussions, Q&A](https://github.com/visitojs/visitojs/discussions/categories/q-a). Ideas go in [Ideas](https://github.com/visitojs/visitojs/discussions/categories/ideas).
 - **A bug you can reproduce?** Open an [issue](https://github.com/visitojs/visitojs/issues/new/choose). The form asks for the browser, the device and the reading.
 - **A reading from a device we have not seen?** Use the "Device reading" issue form. It helps decide what the next id version is built from.
 - **A vulnerability?** Do not open an issue. Follow [SECURITY.md](SECURITY.md).
