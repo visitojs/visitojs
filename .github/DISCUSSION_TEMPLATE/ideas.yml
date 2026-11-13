@@ -1,0 +1,20 @@
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What you are trying to do
+      description: The site, the case and what is missing today.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you would add or change
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: How it could be measured
+      description: A value enters an id only after it is measured the same across the browsers of one real device. If the idea touches an id, say how that could be shown.

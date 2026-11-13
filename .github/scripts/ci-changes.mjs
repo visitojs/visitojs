@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url'
 const SITE = [/^demo\//, /^\.github\/brand\//, /^(?!(src|test|lab)\/).*\.(png|ico|svg)$/]
 
 // Files no browser harness reads and no build step uses. Anything else, including a file added tomorrow, counts as code
-const DOCS = [/\.md$/, /^docs\//, /^LICENSE$/, /^third_party\//, /^\.github\/ISSUE_TEMPLATE\//, /^\.github\/CODEOWNERS$/, /^\.github\/dependabot\.yml$/, ...SITE]
+const DOCS = [/\.md$/, /^docs\//, /^LICENSE$/, /^third_party\//, /^\.github\/ISSUE_TEMPLATE\//, /^\.github\/DISCUSSION_TEMPLATE\//, /^\.github\/CODEOWNERS$/, /^\.github\/dependabot\.yml$/, ...SITE]
 
 // What can change the shipped bytes in Chrome 53 to 80 or the run that checks them. .npmrc and .gitattributes change what npm
 // runs and the line endings of src/. The last three are the wiring that starts the run

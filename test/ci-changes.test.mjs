@@ -17,7 +17,7 @@ const none = { code: false, oldEngines: false }
 test('a change to documentation only needs neither the browser harnesses nor the old engines', () => {
   assert.deepEqual(classify(['README.md', 'docs/SIGNALS.md', 'CHANGELOG.md', 'lab/testpage/README.md']), none)
   assert.deepEqual(classify(['LICENSE', 'third_party/licenses/NOTICE.txt', 'docs/img/flow.svg']), none)
-  assert.deepEqual(classify(['.github/ISSUE_TEMPLATE/bug.yml', '.github/PULL_REQUEST_TEMPLATE.md', '.github/CODEOWNERS', '.github/dependabot.yml']), none)
+  assert.deepEqual(classify(['.github/ISSUE_TEMPLATE/bug.yml', '.github/DISCUSSION_TEMPLATE/q-a.yml', '.github/PULL_REQUEST_TEMPLATE.md', '.github/CODEOWNERS', '.github/dependabot.yml']), none)
 })
 
 test('nothing changed needs nothing', () => {

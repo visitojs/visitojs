@@ -1,0 +1,23 @@
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: Ask anything about using VisitoJS. A bug you can reproduce is better as an issue, and a vulnerability goes through [SECURITY.md](https://github.com/visitojs/visitojs/blob/main/SECURITY.md), not here.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What you are trying to do, and where you are stuck.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version and entry
+      placeholder: visitojs 1.0.0, the core from jsDelivr
+  - type: textarea
+    id: reading
+    attributes:
+      label: Reading, if it helps
+      description: What `get()` returned, from your own device. Leave out `did`.
+      render: json
