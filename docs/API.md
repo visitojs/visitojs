@@ -8,6 +8,7 @@ The full reference. The [README](../README.md) has the quick start and a summary
 - [`Visito.start(options)`](#visitostartoptions)
 - [Options](#options)
 - [The reading](#the-reading)
+- [How the ids behave](#how-the-ids-behave)
 - [Automation marks](#automation-marks)
 - [What 1.x keeps](#what-1x-keeps)
 - [Waiting for consent](#waiting-for-consent)
@@ -75,6 +76,16 @@ Set them before the script loads, or, with the deferred build, at any point befo
 | `c` | object | The raw values behind the ids; see [SIGNALS.md](SIGNALS.md) |
 | `ms`, `t` | number, object | Milliseconds of work, in total and per step |
 
+## How the ids behave
+
+- Two phones of one model with the same settings get the same `id`. The stored id separates them, while it survives.
+- No uniqueness or accuracy figure has been measured on enough devices to state one.
+- Brave, Safari and Firefox randomise or clamp some values on purpose. Those are left out, so the id rests on fewer values. On Brave for desktop only the language and the text size are left: every Brave desktop with the same two shares one `id`, and `flags.weak` is true.
+- Where browsers report different values, such as a model in one and none in another, the ids differ. On an iPhone measured in one session, Safari, Chrome and Instagram's in-app browser gave three ids under the 0.1.0 rules; whether Safari and Chrome now share one is not measured ([DECISIONS.md](DECISIONS.md#the-rules-replayed-on-the-session), one session on three devices).
+- The fingerprint id was the same in normal and private windows of Chrome, Brave and Safari on the phones measured; it has not been measured in every browser.
+- The automation marks are easy to patch around. An empty `flags.auto` means none was observed, nothing more; see [Automation marks](#automation-marks).
+- On WebKit and Gecko, on a view whose stored id is new, the private-window check opens the origin's private file system and writes nothing to it; Firefox 155 then reported about 480 KB of storage usage for the origin ([DECISIONS.md](DECISIONS.md#the-in-memory-session-check-behind-flagsprivate)).
+
 ## Automation marks
 
 `flags.auto` lists what the script observed at script start. Each mark names one observation. None of them enters an id.
@@ -96,7 +107,7 @@ These eight are the core's whole list for 1.x. No separate automation entry ship
 
 ## What 1.x keeps
 
-This is part of the support policy in [RELEASING.md](../RELEASING.md#support-policy), which is proposed, not final yet. `test/types/consumer.ts` pins the type of every field named here and fails when one narrows, widens or disappears.
+This is part of the support policy in [RELEASING.md](../RELEASING.md#support-policy). `test/types/consumer.ts` pins the type of every field named here and fails when one narrows, widens or disappears.
 
 Every field in [the reading](#the-reading) keeps its name, type and meaning for all of 1.x: `v`, `did`, `didNew`, `didSrc`, `id`, `idStrict`, `model`, `os`, `osVer`, `app`, `appVer`, `engineVer`, `flags.partial`, `flags.auto`, `flags.private`, `flags.weak`, `c`, `ms` and `t`. `get` calls back with such a reading or with `null` in the cases listed under [`Visito.get`](#visitogetcallback), and `getSync` returns one or `null`.
 

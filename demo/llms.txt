@@ -2,7 +2,7 @@
 
 > VisitoJS is an MIT-licensed browser script for device identification. It returns a stored id (`did`, kept in a first-party cookie and in localStorage), a fingerprint id (`id`) built from a few values that stay the same across the browsers of one device where those browsers report them alike, a stricter id (`idStrict`) that adds OS and app versions, and flags that say what the reading could not establish (`partial`, `weak`, `private`, `auto`). It makes no network request, ships as ES5 back to Chrome 53, and its core is under 8 KB gzipped (a test holds it at or under 8,192 bytes). Install it with `npm install visitojs` or load `dist/visito.min.js` from jsDelivr.
 
-What it cannot do: two identical devices with identical settings get the same `id`, and only the stored id tells them apart; no uniqueness or accuracy figure is claimed; values that Brave, Safari and Firefox randomise or clamp are left out, so there the id rests on fewer values and `flags.weak` may be true; the eight automation marks in `flags.auto` are easy to patch around and are not a bot score. Inside a frame it returns `null`. Device identification is regulated; the library collects no consent and leaves the legal basis to the site, and a deferred build reads nothing until the page calls `start()`.
+Devices of one model with the same settings share an `id`, so the stored id comes first, and values that Brave, Safari and Firefox randomise or clamp are left out, with `flags.weak` set when an id rests on fewer values. The eight automation marks in `flags.auto` report observations for the site's server to weigh; inside a frame the library returns `null`, and a deferred build reads nothing until the page calls `start()`.
 
 ## Docs
 

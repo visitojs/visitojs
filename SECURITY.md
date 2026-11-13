@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Proposed for 1.x, not final yet: security fixes for 24 months from the release of 1.0.0, and for at least 12 months after 2.0.0, as patches of the latest 1.x minor release. The proposal is in [RELEASING.md](RELEASING.md#support-policy). Until it is signed off, only the latest release receives fixes.
+1.x gets security fixes for 24 months from the release of 1.0.0, and for at least 12 months after 2.0.0, as patches of the latest 1.x minor release. The policy is in [RELEASING.md](RELEASING.md#support-policy).
 
 ## Reporting a vulnerability
 
