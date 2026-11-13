@@ -8,8 +8,12 @@ const engineName = process.argv[2] || 'chromium'
 const files = {
   '/': [readFileSync(new URL('../demo/index.html', import.meta.url)), 'text/html; charset=utf-8'],
   '/visito.min.js': [readFileSync(new URL('../dist/visito.min.js', import.meta.url)), 'application/javascript'],
-  '/favicon.svg': [readFileSync(new URL('../demo/favicon.svg', import.meta.url)), 'image/svg+xml'],
   '/llms.txt': [readFileSync(new URL('../demo/llms.txt', import.meta.url)), 'text/plain; charset=utf-8'],
+  '/favicon.ico': [readFileSync(new URL('../demo/favicon.ico', import.meta.url)), 'image/x-icon'],
+}
+// the brand images, as pages.yml publishes them
+for (const name of ['favicon-32.png', 'favicon-180.png', 'favicon-192.png', 'favicon-512.png', 'logo-light-624.png', 'logo-dark-624.png', 'social-preview.png']) {
+  files['/' + name] = [readFileSync(new URL(`../demo/${name}`, import.meta.url)), 'image/png']
 }
 const server = http.createServer((request, response) => {
   const file = files[request.url]
@@ -48,6 +52,16 @@ try {
     check(`${colorScheme}: every file the page asks for is there`, !missing.length, missing.join(' | '))
     const described = await page.evaluate(() => ({ title: document.title, canonical: (document.querySelector('link[rel=canonical]') || {}).href, ld: JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent)['@type'] }))
     check(`${colorScheme}: the page describes itself: title, canonical link and JSON-LD`, /^VisitoJS/.test(described.title) && described.canonical === 'https://visitojs.github.io/visitojs/' && described.ld === 'SoftwareSourceCode', JSON.stringify(described))
+    // the header logo: the theme's own file, drawn at its set size, with the name as its text
+    const logo = await page.evaluate(() => {
+      const img = document.querySelector('header .brand img')
+      return img && { file: img.currentSrc.split('/').pop(), width: img.naturalWidth, shown: img.getBoundingClientRect().width, alt: img.alt, text: img.parentNode.parentNode.textContent.trim() }
+    })
+    const expected = colorScheme === 'dark' ? 'logo-dark-624.png' : 'logo-light-624.png'
+    check(`${colorScheme}: the header shows ${expected}, 156 px wide, and no typed name`, logo && logo.file === expected && logo.width === 624 && logo.shown === 156 && logo.alt === 'VisitoJS' && logo.text === '', JSON.stringify(logo))
+    const preview = await page.evaluate(() => (document.querySelector('meta[property="og:image"]') || {}).content)
+    const served = preview && files['/' + preview.split('/').pop()]
+    check(`${colorScheme}: the link-preview image is a file the site serves`, preview === 'https://visitojs.github.io/visitojs/social-preview.png' && served, String(preview))
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
     check(`${colorScheme}: nothing overflows a phone-width screen`, overflow <= 0, `${overflow}px`)
     await page.screenshot({ path: `lab/report/raw/demo-${engineName}-${colorScheme}.png`, fullPage: true })

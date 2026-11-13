@@ -6,13 +6,23 @@
 <title>VisitoJS: device identification in the browser, live demo</title>
 <meta name="description" content="Live demo of VisitoJS, a small open-source script that gives a browser a stored id and a fingerprint id. Nothing on this page leaves your device.">
 <link rel="canonical" href="https://visitojs.github.io/visitojs/">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="favicon-512.png">
+<link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
+<meta name="theme-color" content="#fbf9f3">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="VisitoJS">
 <meta property="og:title" content="VisitoJS live demo: the ids of this device">
 <meta property="og:description" content="See the stored id, the fingerprint id and the flags VisitoJS gives this browser. The page makes no network request beyond its own files.">
 <meta property="og:url" content="https://visitojs.github.io/visitojs/">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://visitojs.github.io/visitojs/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="The VisitoJS logo, a V drawn as fingerprint ridges, above the line: Know the device behind every visit.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://visitojs.github.io/visitojs/social-preview.png">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -23,18 +33,22 @@
   "codeRepository": "https://github.com/visitojs/visitojs",
   "programmingLanguage": "TypeScript",
   "runtimePlatform": "Web browser",
+  "image": "https://visitojs.github.io/visitojs/social-preview.png",
   "license": "https://spdx.org/licenses/MIT.html",
   "version": "1.0.0"
 }
 </script>
 <style>
   :root {
-    --paper: #fbf9f3; --ink: #12161a; --soft: #5b6470; --line: #dedad0; --card: #ffffff; --accent: #0b6e5c;
-    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-    --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    /* the brand kit: Teal, Mint, Ink, Paper, Night, Line; a softer tone is a kit colour with transparency */
+    --paper: #fbf9f3; --ink: #12161a; --soft: rgba(18, 22, 26, 0.72); --line: #dedad0; --card: rgba(222, 218, 208, 0.28); --accent: #0b6e5c;
+    /* the kit's families where the visitor has them installed; nothing is downloaded */
+    --heading: "Lexend", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --serif: "Source Serif 4", "Source Serif Pro", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --paper: #0d1114; --ink: #f1efe8; --soft: #9aa3ad; --line: #252c33; --card: #141a1f; --accent: #3fd0b0; }
+    :root { --paper: #0d1114; --ink: #fbf9f3; --soft: rgba(251, 249, 243, 0.7); --line: rgba(222, 218, 208, 0.18); --card: #12161a; --accent: #3fd0b0; }
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--serif); font-size: 18px; line-height: 1.55; }
@@ -42,10 +56,11 @@
   a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   .wrap { max-width: 760px; margin: 0 auto; padding: 0 20px; }
   header { display: flex; justify-content: space-between; align-items: center; padding: 22px 0; border-bottom: 1px solid var(--line); }
-  .brand { font-weight: 700; font-size: 22px; text-decoration: none; }
-  .brand b { color: var(--accent); }
+  .brand { display: block; line-height: 0; }
+  .brand img { display: block; width: 156px; height: 54px; }
   nav a { font-family: var(--mono); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; margin-left: 18px; }
   .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin: 48px 0 10px; }
+  h1, h2 { font-family: var(--heading); font-weight: 600; }
   h1 { font-size: clamp(30px, 6vw, 46px); line-height: 1.12; letter-spacing: -0.01em; margin: 0 0 14px; }
   h1 em { color: var(--accent); }
   .lede { color: var(--soft); margin: 0 0 34px; max-width: 58ch; }
@@ -71,7 +86,7 @@
 <body>
 <div class="wrap">
   <header>
-    <a class="brand" href="https://github.com/visitojs/visitojs">Visito<b>JS</b></a>
+    <a class="brand" href="https://github.com/visitojs/visitojs"><picture><source srcset="logo-dark-624.png" media="(prefers-color-scheme: dark)"><img src="logo-light-624.png" alt="VisitoJS" width="156" height="54"></picture></a>
     <nav><a href="https://github.com/visitojs/visitojs">GitHub</a><a href="https://www.npmjs.com/package/visitojs">npm</a></nav>
   </header>
 
