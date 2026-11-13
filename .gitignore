@@ -1,0 +1,10 @@
+node_modules/
+build/
+dist/
+private/
+lab/report/raw/
+*.log
+lab/testpage/public/visito.js
+lab/testpage/wrangler.jsonc
+.wrangler/
+lab/compare/cache/

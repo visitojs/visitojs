@@ -1,0 +1,85 @@
+name: Old engines
+
+# Chrome 53 to 80 run the built files with no network. CI calls this workflow when a change can alter the shipped bytes
+# or the harness (the list is in .github/scripts/ci-changes.mjs); it can also be started by hand. It has no push or
+# pull_request trigger of its own: a path filter there would leave its check pending on every other pull request.
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+# github.workflow is the caller's name in a called run, so a called run and a direct run on the same ref never share a group.
+# Only a pull request cancels a run in progress. On main or a tag a run in progress is never cancelled; a newer run waits,
+# and replaces one still pending, since GitHub keeps one pending run per group
+concurrency:
+  group: old-engines-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  old-engines:
+    name: Old engines (Chrome 53 to 80)
+    # GitHub's runners run the images in Docker. A self-hosted runner chosen by CI_LINUX_RUNNER has no Docker: run.sh pulls
+    # the same images by digest and runs them in user namespaces there, with the unpacked images cached in the tool cache
+    runs-on: ${{ vars.CI_LINUX_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts
+      - id: build
+        run: npm run build
+      # each step prints one line per image: its Chrome version, and whether the ids it computed equal the ones Node recomputes
+      - name: Product build in Chrome 53 to 80
+        run: |
+          status=0
+          lab/old-engines/run.sh > "$RUNNER_TEMP/product.txt" || status=$?
+          cat "$RUNNER_TEMP/product.txt"
+          { echo '### Product build'; echo '```'; cat "$RUNNER_TEMP/product.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+      - name: Lab build in Chrome 53 to 80
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          BUNDLE: dist/visito.lab.min.js
+        run: |
+          status=0
+          lab/old-engines/run.sh > "$RUNNER_TEMP/lab.txt" || status=$?
+          cat "$RUNNER_TEMP/lab.txt"
+          { echo '### Lab build'; echo '```'; cat "$RUNNER_TEMP/lab.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+      - name: Deferred build in Chrome 53 to 80
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          BUNDLE: dist/visito.defer.min.js
+        run: |
+          status=0
+          lab/old-engines/run.sh > "$RUNNER_TEMP/defer.txt" || status=$?
+          cat "$RUNNER_TEMP/defer.txt"
+          { echo '### Deferred build'; echo '```'; cat "$RUNNER_TEMP/defer.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+      # the deep entry: one line per image with its deep id, and the parts that moved where it changes between versions
+      - name: Deep entry in Chrome 53 to 80
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          BUNDLE: dist/deep.min.js
+        run: |
+          status=0
+          lab/old-engines/run.sh > "$RUNNER_TEMP/deep.txt" || status=$?
+          cat "$RUNNER_TEMP/deep.txt"
+          { echo '### Deep entry'; echo '```'; cat "$RUNNER_TEMP/deep.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+      - name: Raw output of the images
+        if: failure()
+        run: |
+          for file in lab/report/raw/old-engines*.txt; do
+            # nothing to show when the build failed before run.sh wrote anything
+            [ -f "$file" ] || continue
+            echo "== $file"
+            cut -c1-3000 "$file"
+          done

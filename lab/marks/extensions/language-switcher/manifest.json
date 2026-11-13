@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "VisitoJS test: language switcher",
+  "version": "1.0",
+  "description": "Test fixture for lab/marks.mjs: gives the page the languages a person picked, on the navigator object itself.",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["languages.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    }
+  ]
+}

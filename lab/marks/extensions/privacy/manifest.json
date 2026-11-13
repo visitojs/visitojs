@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "VisitoJS test: privacy wrapper",
+  "version": "1.0",
+  "description": "Test fixture for lab/marks.mjs: wraps navigator and screen getters, as anti-fingerprinting extensions do.",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["wrap.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    }
+  ]
+}

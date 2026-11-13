@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>old engine, deep entry</title>
+<script>
+// ES3 only: this page must run in the oldest browsers we test.
+var out = { errors: [], calls: 0 };
+function report() { console.log('VISITO_RESULT ' + encodeURIComponent(JSON.stringify(out)) + ' END'); }
+window.onerror = function (message, file, line) { out.errors.push(String(message) + ' @' + line); };
+</script>
+<script src="/visito.min.js"></script>
+<script>
+(function () {
+  out.ua = navigator.userAgent;
+  out.defined = typeof VisitoDeep;
+  var returned = false;
+  try {
+    VisitoDeep.get(function (reading) { out.calls++; out.early = !returned; out.got = reading; out.called = true; report(); });
+    returned = true;
+  } catch (e) { out.threw = 'get: ' + e; report(); }
+  // the deep entry waits for load and an idle moment, then reads; its own watchdog answers at 30 s
+  setTimeout(function () { if (!out.called) { out.timedOut = true; report(); } }, 35000);
+})();
+</script>

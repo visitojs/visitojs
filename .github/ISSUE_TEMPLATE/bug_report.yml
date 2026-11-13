@@ -1,0 +1,41 @@
+name: Bug report
+description: Something the library does wrong in a browser or on a device
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what you got instead.
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser or app, and version
+      placeholder: Instagram 455 in-app browser, Chrome 157
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and OS version
+      placeholder: Galaxy A15, Android 15
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: VisitoJS version or commit
+    validations:
+      required: true
+  - type: textarea
+    id: reading
+    attributes:
+      label: The reading
+      description: The output of `JSON.stringify(Visito.getSync())` from your own device. Remove the `did` value. Never paste readings from your users.
+      render: json
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else

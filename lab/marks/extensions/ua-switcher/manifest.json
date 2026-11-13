@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "VisitoJS test: user-agent switcher",
+  "version": "1.0",
+  "description": "Test fixture for lab/marks.mjs: replaces the user agent, app version and platform in the page.",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["switch.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    }
+  ]
+}

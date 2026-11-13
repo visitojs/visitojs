@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "VisitoJS test: plug-in emulator",
+  "version": "1.0",
+  "description": "Test fixture for lab/marks.mjs: adds an emulated plug-in to the page's plug-in and MIME type lists.",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["emulate.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    }
+  ]
+}

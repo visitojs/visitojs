@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: VisitoJS
+abstract: "Device identification in the browser: a stored id, a fingerprint id and flags for what could not be read. No network requests."
+authors:
+  - name: VisitoJS
+version: 1.0.0
+license: MIT
+repository-code: "https://github.com/visitojs/visitojs"
+url: "https://visitojs.github.io/visitojs/"
+keywords:
+  - device identification
+  - browser fingerprint
+  - visitor id

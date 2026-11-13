@@ -1,0 +1,161 @@
+<!doctype html>
+<!--
+  Phone test page. Design choices: one task per screen, Arabic first with French under it, large type and
+  large tap targets for testers who are not technical. System fonts on purpose: a web font would add requests
+  to a page whose job is to measure a phone, and system Arabic faces are the most readable on each device.
+  One accent colour, no logo: this page is internal and linked from nowhere.
+-->
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>فحص الهاتف</title>
+<style>
+  :root { --page: #f6f2e8; --ink: #1b211e; --soft: #5c655f; --line: #d9d2c2; --accent: #17684a; --on-accent: #ffffff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --page: #101613; --ink: #ecefe9; --soft: #a3aca5; --line: #2b3530; --accent: #58c296; --on-accent: #0b1410; }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body { margin: 0; min-height: 100vh; min-height: 100svh; background: var(--page); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", "Noto Sans Arabic", "Noto Naskh Arabic", Roboto, Tahoma, sans-serif; line-height: 1.5; }
+  main { max-width: 26rem; margin: 0 auto; padding: 2.5rem 1.25rem 2rem; }
+  h1 { margin: 0 0 .35rem; font-size: 1.7rem; line-height: 1.3; font-weight: 700; }
+  .fr { direction: ltr; text-align: left; color: var(--soft); font-size: 1.05rem; margin: 0 0 1.75rem; }
+  .hint { margin: 0 0 .35rem; font-size: 1.05rem; }
+  [hidden] { display: none !important; }
+  .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 40%; border-radius: 3px; background: var(--accent); animation: slide 1.4s ease-in-out infinite; }
+  @keyframes slide { from { margin-inline-start: -40%; } to { margin-inline-start: 100%; } }
+  @media (prefers-reduced-motion: reduce) { .bar i { animation: none; width: 100%; } }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; direction: ltr; }
+  .grid button { height: 4.5rem; border: 2px solid var(--line); border-radius: .75rem; background: transparent; color: var(--ink);
+    font: inherit; font-size: 1.7rem; font-weight: 700; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  .grid button:active, .grid button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .grid button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .tick { width: 4.5rem; height: 4.5rem; border-radius: 50%; background: var(--accent); margin: 0 0 1.5rem; position: relative; }
+  .tick::after { content: ""; position: absolute; left: 1.55rem; top: .95rem; width: 1.1rem; height: 2.1rem;
+    border: solid var(--on-accent); border-width: 0 .4rem .4rem 0; transform: rotate(45deg); }
+  .code { margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--line); color: var(--soft); font-size: 1rem; }
+  .code b { display: block; direction: ltr; text-align: right; color: var(--ink); font-size: 2rem; letter-spacing: .12em;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-weight: 700; }
+</style>
+</head>
+<body>
+<main>
+  <section id="wait">
+    <h1>جاري فحص الهاتف…</h1>
+    <p class="fr">Vérification du téléphone en cours…</p>
+    <div class="bar"><i></i></div>
+  </section>
+
+  <section id="pick" hidden>
+    <h1>ما رقم هذا الهاتف؟</h1>
+    <p class="hint">أعطِ كل هاتف رقماً، واختر دائماً نفس الرقم لنفس الهاتف.</p>
+    <p class="fr">Donnez un numéro à chaque téléphone et gardez toujours le même.</p>
+    <div class="grid" id="phones"></div>
+  </section>
+
+  <section id="done" hidden>
+    <div class="tick" role="img" aria-label="تم"></div>
+    <h1>تم. شكراً لك</h1>
+    <p class="fr">Terminé. Merci.</p>
+    <p class="code">الرمز · Code <b id="code"></b></p>
+  </section>
+</main>
+
+<script>window.VisitoConfig = { did: '_dzt' };</script>
+<script src="/visito.js"></script>
+<script>
+// ES5 on purpose: this page must run on the oldest phones we want to hear from.
+(function () {
+  var key = (/[?&]k=([^&]+)/.exec(location.search) || [])[1] || '';
+  var LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  var rid = '';
+  for (var i = 0; i < 12; i++) rid += LETTERS.charAt(Math.floor(Math.random() * LETTERS.length));
+  var payload = { rid: rid, phone: null, errors: [], started: new Date().getTime() };
+  window.onerror = function (message, file, line) { payload.errors.push(String(message) + ' @' + line); };
+
+  function show(id) {
+    var ids = ['wait', 'pick', 'done'];
+    for (var n = 0; n < ids.length; n++) document.getElementById(ids[n]).hidden = ids[n] !== id;
+  }
+  function send() {
+    try {
+      var request = new XMLHttpRequest();
+      request.open('POST', '/r?k=' + key, true);
+      request.setRequestHeader('Content-Type', 'application/json');
+      request.send(JSON.stringify(payload));
+    } catch (e) {}
+  }
+  // one value per kind of storage, stamped when first written, so the next visit shows which kinds survived
+  function keep(read, write) {
+    try {
+      var value = read();
+      if (!value) { value = rid + '.' + new Date().getTime(); write(value); value = read(); }
+      return value || null;
+    } catch (e) { return 'error'; }
+  }
+  function storage() {
+    return {
+      js: keep(function () { return (/(?:^|; )_dzt_js=([^;]+)/.exec(document.cookie) || [])[1]; },
+               function (v) { document.cookie = '_dzt_js=' + v + '; Path=/; Max-Age=34560000; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : ''); }),
+      ls: keep(function () { return localStorage.getItem('_dzt_ls'); }, function (v) { localStorage.setItem('_dzt_ls', v); })
+    };
+  }
+  // a fixed amount of plain arithmetic: its duration tells how fast this phone is next to the lab
+  function calibrate() {
+    var best = Infinity;
+    for (var round = 0; round < 3; round++) {
+      var t = performance.now(), x = 7;
+      for (var j = 0; j < 3000000; j++) x = (x * 31 + j) | 0;
+      best = Math.min(best, performance.now() - t + (x === -1 ? 1 : 0));
+    }
+    return Math.round(best * 10) / 10;
+  }
+  function screenFacts() {
+    try {
+      return { sw: screen.width, sh: screen.height, aw: screen.availWidth, ah: screen.availHeight, iw: innerWidth, ih: innerHeight,
+               dpr: devicePixelRatio, vv: window.visualViewport ? [visualViewport.width, visualViewport.height, visualViewport.scale] : null };
+    } catch (e) { return null; }
+  }
+
+  var remembered = null;
+  try { remembered = localStorage.getItem('_dzt_phone'); } catch (e) {}
+  var grid = document.getElementById('phones');
+  for (var p = 1; p <= 8; p++) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = String(p);
+    button.setAttribute('aria-pressed', String(remembered === String(p)));
+    button.onclick = (function (number) {
+      return function () {
+        payload.phone = number;
+        try { localStorage.setItem('_dzt_phone', String(number)); } catch (e) {}
+        send();
+        show('done');
+      };
+    })(p);
+    grid.appendChild(button);
+  }
+
+  function finish(reading) {
+    payload.reading = reading;
+    payload.storage = storage();
+    payload.screen = screenFacts();
+    payload.took = new Date().getTime() - payload.started;
+    try { payload.calib = calibrate(); } catch (e) { payload.calib = null; }
+    document.getElementById('code').textContent = ((reading && (reading.id || reading.did)) || rid).replace(/[^0-9a-zA-Z]/g, '').slice(0, 4).toUpperCase();
+    send();
+    show('pick');
+  }
+  var answered = false;
+  function once(reading) { if (!answered) { answered = true; finish(reading); } }
+  try { Visito.get(once); } catch (e) { payload.errors.push('get: ' + e); }
+  // the library's own watchdog is 30 s; this page never leaves a tester waiting longer than that
+  setTimeout(function () { once(typeof Visito === 'object' ? Visito.getSync() : null); }, 32000);
+})();
+</script>
+</body>
+</html>

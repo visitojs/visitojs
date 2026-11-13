@@ -1,0 +1,26 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>old engine</title>
+<script>
+// ES3 only: this page must run in the oldest browsers we test.
+var out = { errors: [] };
+function report() { console.log('VISITO_RESULT ' + encodeURIComponent(JSON.stringify(out)) + ' END'); }
+window.onerror = function (message, file, line) { out.errors.push(String(message) + ' @' + line); };
+</script>
+<script src="/visito.min.js"></script>
+<script>
+(function () {
+  out.ua = navigator.userAgent;
+  out.defined = typeof Visito;
+  // the deferred build reads nothing until the page starts it; the other builds have no start()
+  try {
+    out.started = typeof Visito.start === 'function';
+    if (out.started) Visito.start();
+  } catch (e) { out.threw = 'start: ' + e; }
+  try { out.sync = Visito.getSync(); } catch (e) { out.threw = 'getSync: ' + e; }
+  try {
+    Visito.get(function (reading) { out.got = reading; out.called = true; report(); });
+  } catch (e) { out.threw = 'get: ' + e; report(); }
+  setTimeout(function () { if (!out.called) { out.timedOut = true; report(); } }, 5000);
+})();
+</script>

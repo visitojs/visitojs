@@ -1,0 +1,22 @@
+name: Feature request
+description: Propose a change or an addition
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What you are trying to do and what stops you today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you propose
+    validations:
+      required: true
+  - type: textarea
+    id: cost
+    attributes:
+      label: Cost
+      description: If it adds a read or bytes to the product build, say what you expect it to cost on a phone. The product build has a budget of 8,192 bytes gzipped.

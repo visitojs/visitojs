@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "VisitoJS test: password manager",
+  "version": "1.0",
+  "description": "Test fixture for lab/marks.mjs: looks for password fields from the isolated world and changes nothing in the page's own.",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["scan.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
+}

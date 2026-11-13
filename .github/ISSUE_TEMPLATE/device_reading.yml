@@ -1,0 +1,34 @@
+name: Device reading
+description: Share a reading from a device or an in-app browser that the docs do not list yet
+labels: [measurement]
+body:
+  - type: markdown
+    attributes:
+      value: The ids were decided from a small set of devices. A reading from another one helps decide what the next id version is built from. Use the lab build (`dist/visito.lab.min.js`) if you can, and your own device only.
+  - type: input
+    id: device
+    attributes:
+      label: Device and OS version
+      placeholder: Redmi Note 12, Android 14
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser or app, and version
+      placeholder: Facebook 586 in-app browser
+    validations:
+      required: true
+  - type: textarea
+    id: reading
+    attributes:
+      label: The reading
+      description: The output of `JSON.stringify(Visito.getSync())` once `Visito.get` has called back. Remove the `did` value.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: What you noticed
+      description: For example a value that differs between two browsers on this phone, or a slow step.

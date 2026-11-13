@@ -1,0 +1,20 @@
+# VisitoJS
+
+> VisitoJS is an MIT-licensed browser script for device identification. It returns a stored id (`did`, kept in a first-party cookie and in localStorage), a fingerprint id (`id`) built from a few values that stay the same across the browsers of one device where those browsers report them alike, a stricter id (`idStrict`) that adds OS and app versions, and flags that say what the reading could not establish (`partial`, `weak`, `private`, `auto`). It makes no network request, ships as ES5 back to Chrome 53, and its core is under 8 KB gzipped (a test holds it at or under 8,192 bytes). Install it with `npm install visitojs` or load `dist/visito.min.js` from jsDelivr.
+
+What it cannot do: two identical devices with identical settings get the same `id`, and only the stored id tells them apart; no uniqueness or accuracy figure is claimed; values that Brave, Safari and Firefox randomise or clamp are left out, so there the id rests on fewer values and `flags.weak` may be true; the eight automation marks in `flags.auto` are easy to patch around and are not a bot score. Inside a frame it returns `null`. Device identification is regulated; the library collects no consent and leaves the legal basis to the site, and a deferred build reads nothing until the page calls `start()`.
+
+## Docs
+
+- [README](https://github.com/visitojs/visitojs/blob/main/README.md): what it returns, the quick start, the entries and their sizes, the limits and a FAQ
+- [API reference](https://github.com/visitojs/visitojs/blob/main/docs/API.md): every call, field, flag and automation mark, consent wiring, the server-side matcher and the experimental deep entry
+- [Signals](https://github.com/visitojs/visitojs/blob/main/docs/SIGNALS.md): every value the library reads, and how a server recomputes each id from the reading
+- [Decisions](https://github.com/visitojs/visitojs/blob/main/docs/DECISIONS.md): the measurements behind each part of the ids, with dates, devices and browsers
+- [Legal pointers](https://github.com/visitojs/visitojs/blob/main/docs/LEGAL.md): what the library reads and stores, the texts a site owner should read, and how to remove what it stored; not legal advice
+- [Comparison](https://github.com/visitojs/visitojs/blob/main/COMPARISON.md): the core run beside three other open-source libraries through the same checks, losses included, with the command that reproduces it
+- [Changelog](https://github.com/visitojs/visitojs/blob/main/CHANGELOG.md): changes per release, including every change of id version
+
+## Optional
+
+- [Live demo](https://visitojs.github.io/visitojs/): the ids of the visiting browser, computed in the page
+- [npm package](https://www.npmjs.com/package/visitojs): `visitojs`, with the entries `visitojs`, `visitojs/defer`, `visitojs/match` and `visitojs/deep`

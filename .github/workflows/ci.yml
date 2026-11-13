@@ -1,0 +1,171 @@
+name: CI
+
+# No path filters: a workflow skipped by one leaves its checks pending for ever, so a required check could never pass.
+# The unit job decides instead what a change needs, and jobs skipped by their own if: report success.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # the Release workflow runs all of CI on the tagged commit before it publishes
+  workflow_call:
+    inputs:
+      full:
+        description: Run every job, whatever the change touched
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# github.workflow is the caller's name in a called run, so a release never shares a group with a direct run.
+# Only a pull request cancels a run in progress. On main a run in progress is never cancelled; a newer push replaces one
+# still pending, since GitHub keeps one pending run per group
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# CI_LINUX_RUNNER is a repository variable. Unset, every job runs on GitHub's runners and the browser job in the Playwright
+# image. Set to the label of a self-hosted Linux runner, the jobs run there with no container: that runner has no Docker,
+# carries the image's system libraries itself, and downloads the pinned browser build in the job. The old engines run there
+# too, without Docker (lab/old-engines/sandbox.sh). The Windows job does not run while it is set, and CI result does not
+# count that skip as a failure, except when the Release workflow calls CI: a release needs it.
+jobs:
+  unit:
+    name: Build and unit tests
+    runs-on: ${{ vars.CI_LINUX_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 10
+    outputs:
+      code: ${{ steps.changes.outputs.code }}
+      old_engines: ${{ steps.changes.outputs.old_engines }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # the decision compares this commit with the one before it
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      # before the tests, so that the decision is there for CI result to read even when a test fails
+      - id: changes
+        name: Decide what this change needs
+        env:
+          FULL: ${{ inputs.full }}
+        run: node .github/scripts/ci-changes.mjs
+      - run: npm ci --ignore-scripts
+      - run: npm test
+
+  # Windows minutes are billed double, so a change to documentation alone does not start this job. While CI_LINUX_RUNNER is
+  # set it does not start either: that runner is Linux only and GitHub's runners do not start for this repository, so the
+  # job would wait and fail. CI result lets that skip pass; RELEASING.md says what to do before a release
+  windows:
+    name: Build and unit tests (Windows)
+    needs: unit
+    if: ${{ needs.unit.outputs.code == 'true' && vars.CI_LINUX_RUNNER == '' }}
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm test
+
+  browsers:
+    name: Browser harnesses (${{ matrix.engine }})
+    needs: unit
+    if: ${{ needs.unit.outputs.code == 'true' }}
+    runs-on: ${{ vars.CI_LINUX_RUNNER || 'ubuntu-latest' }}
+    # a page that hangs must not hold the job for GitHub's six-hour default. On a one-CPU self-hosted runner Firefox's fault matrices
+    # alone took 5m44, 8m23, 8m29 and 6m17 (product, lab, deferred, deep), so its job needs about 34 minutes there, and WebKit's
+    # reached its 28th minute in core stability; GitHub's runners are faster, and a desktop runs everything in about six minutes
+    timeout-minutes: 50
+    container:
+      # must match the playwright version in package.json; the digest is the image index's, from the MCR registry. An empty
+      # image means no container
+      image: ${{ vars.CI_LINUX_RUNNER == '' && 'mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27' || '' }}
+      options: --user 1001 --ipc=host
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, firefox, webkit]
+    env:
+      ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - name: Browser build, where no container brings it
+        if: ${{ vars.CI_LINUX_RUNNER != '' }}
+        run: npx playwright install "$ENGINE"
+      - run: mkdir -p lab/report/raw
+      - name: Fault matrix, product build
+        run: node lab/fault-matrix.mjs "$ENGINE"
+      - name: Fault matrix, lab build
+        run: node lab/fault-matrix.mjs "$ENGINE"
+        env:
+          BUNDLE: dist/visito.lab.min.js
+      - name: Fault matrix, deferred build
+        run: node lab/fault-matrix.mjs "$ENGINE"
+        env:
+          BUNDLE: dist/visito.defer.min.js
+      - name: Deferred build, nothing read before start()
+        run: node lab/defer.mjs "$ENGINE"
+      - name: Fault matrix, deep entry
+        run: node lab/fault-matrix.mjs "$ENGINE"
+        env:
+          BUNDLE: dist/deep.min.js
+      - name: Stability
+        run: node lab/stability.mjs "$ENGINE"
+      - name: Stability, deep entry
+        run: node lab/deep-stability.mjs "$ENGINE"
+      - name: Engine classification
+        run: node lab/engines.mjs "$ENGINE"
+      - name: Test page, end to end
+        run: node lab/testpage/e2e.mjs "$ENGINE"
+      - name: Demo page
+        run: node lab/demo.mjs "$ENGINE"
+
+  old_engines:
+    name: Old engines
+    needs: unit
+    if: ${{ needs.unit.outputs.old_engines == 'true' }}
+    uses: ./.github/workflows/old-engines.yml
+    permissions:
+      contents: read
+
+  # The one check to require in the branch rules: its name stays the same whichever jobs a change needed
+  result:
+    name: CI result
+    needs: [unit, windows, browsers, old_engines]
+    # always(), not !cancelled(): a cancelled run must fail this check, not skip it, because a skipped check passes
+    if: ${{ always() }}
+    runs-on: ${{ vars.CI_LINUX_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Every job this change needed ran and passed
+        env:
+          UNIT: ${{ needs.unit.result }}
+          WINDOWS: ${{ needs.windows.result }}
+          BROWSERS: ${{ needs.browsers.result }}
+          OLD_ENGINES: ${{ needs.old_engines.result }}
+          CODE: ${{ needs.unit.outputs.code }}
+          RUN_OLD_ENGINES: ${{ needs.unit.outputs.old_engines }}
+          # with the variable set, the Windows job is skipped on purpose; not for a release, which asks for every job (full)
+          # and must fail here rather than publish without it
+          SELF_HOSTED: ${{ vars.CI_LINUX_RUNNER != '' && !inputs.full }}
+        run: node .github/scripts/ci-result.mjs

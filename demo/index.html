@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VisitoJS: device identification in the browser, live demo</title>
+<meta name="description" content="Live demo of VisitoJS, a small open-source script that gives a browser a stored id and a fingerprint id. Nothing on this page leaves your device.">
+<link rel="canonical" href="https://visitojs.github.io/visitojs/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="VisitoJS">
+<meta property="og:title" content="VisitoJS live demo: the ids of this device">
+<meta property="og:description" content="See the stored id, the fingerprint id and the flags VisitoJS gives this browser. The page makes no network request beyond its own files.">
+<meta property="og:url" content="https://visitojs.github.io/visitojs/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareSourceCode",
+  "name": "VisitoJS",
+  "description": "Device identification in the browser: a stored id, a fingerprint id and flags for what could not be read. No network requests.",
+  "url": "https://visitojs.github.io/visitojs/",
+  "codeRepository": "https://github.com/visitojs/visitojs",
+  "programmingLanguage": "TypeScript",
+  "runtimePlatform": "Web browser",
+  "license": "https://spdx.org/licenses/MIT.html",
+  "version": "1.0.0"
+}
+</script>
+<style>
+  :root {
+    --paper: #fbf9f3; --ink: #12161a; --soft: #5b6470; --line: #dedad0; --card: #ffffff; --accent: #0b6e5c;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper: #0d1114; --ink: #f1efe8; --soft: #9aa3ad; --line: #252c33; --card: #141a1f; --accent: #3fd0b0; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--serif); font-size: 18px; line-height: 1.55; }
+  a { color: inherit; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 20px; }
+  header { display: flex; justify-content: space-between; align-items: center; padding: 22px 0; border-bottom: 1px solid var(--line); }
+  .brand { font-weight: 700; font-size: 22px; text-decoration: none; }
+  .brand b { color: var(--accent); }
+  nav a { font-family: var(--mono); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; margin-left: 18px; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin: 48px 0 10px; }
+  h1 { font-size: clamp(30px, 6vw, 46px); line-height: 1.12; letter-spacing: -0.01em; margin: 0 0 14px; }
+  h1 em { color: var(--accent); }
+  .lede { color: var(--soft); margin: 0 0 34px; max-width: 58ch; }
+  .ids { display: grid; gap: 14px; }
+  .id { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 18px 20px; }
+  .label { display: flex; justify-content: space-between; gap: 12px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--soft); }
+  .label span:last-child { color: var(--accent); letter-spacing: 0.06em; }
+  .value { font-family: var(--mono); font-size: clamp(15px, 3.6vw, 21px); margin: 8px 0 6px; overflow-wrap: anywhere; min-height: 1.5em; }
+  .note { font-size: 15px; color: var(--soft); margin: 0; }
+  dl { display: grid; grid-template-columns: 9.5em 1fr; gap: 8px 16px; margin: 34px 0 0; padding: 20px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  dt { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--soft); padding-top: 4px; }
+  dd { margin: 0; overflow-wrap: anywhere; }
+  h2 { font-size: 24px; margin: 44px 0 10px; }
+  ol { padding-left: 1.2em; margin: 0; }
+  li { margin: 0 0 8px; }
+  details { margin: 34px 0 0; }
+  summary { cursor: pointer; font-family: var(--mono); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+  pre { font-family: var(--mono); font-size: 13px; line-height: 1.5; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 16px; overflow: auto; }
+  footer { margin: 56px 0 40px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 15px; color: var(--soft); }
+  @media (max-width: 520px) { dl { grid-template-columns: 1fr; gap: 2px 0; } dd { margin-bottom: 10px; } nav a { margin-left: 12px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="https://github.com/visitojs/visitojs">Visito<b>JS</b></a>
+    <nav><a href="https://github.com/visitojs/visitojs">GitHub</a><a href="https://www.npmjs.com/package/visitojs">npm</a></nav>
+  </header>
+
+  <main>
+    <p class="eyebrow">Live demo</p>
+    <h1>This is how a website can <em>recognise</em> your device.</h1>
+    <p class="lede">VisitoJS just ran in your browser. Below is everything it produced. Nothing on this page is sent anywhere.</p>
+
+    <div class="ids">
+      <section class="id">
+        <div class="label"><span>Stored id</span><span id="did-state"></span></div>
+        <div class="value" id="did">reading...</div>
+        <p class="note">A random id kept in this browser, in a cookie and in localStorage.</p>
+      </section>
+      <section class="id">
+        <div class="label"><span>Fingerprint id</span><span id="id-state"></span></div>
+        <div class="value" id="id">reading...</div>
+        <p class="note">Built from your device and its settings. It stays the same when the stored id is gone.</p>
+      </section>
+      <section class="id">
+        <div class="label"><span>Strict id</span><span></span></div>
+        <div class="value" id="strict">reading...</div>
+        <p class="note">The fingerprint plus OS and app versions. It changes with every update.</p>
+      </section>
+    </div>
+
+    <dl>
+      <dt>Device</dt><dd id="device">reading...</dd>
+      <dt>Browser</dt><dd id="browser">reading...</dd>
+      <dt>Flags</dt><dd id="flags">reading...</dd>
+      <dt>Work done</dt><dd id="work">reading...</dd>
+    </dl>
+
+    <h2>Try it</h2>
+    <ol>
+      <li><strong>Reload the page.</strong> Both ids stay, and the stored id is marked as seen before.</li>
+      <li><strong>Open this page in a private window.</strong> The stored id is new. Whether the fingerprint id is the same depends on what the browser lets a private window see.</li>
+      <li><strong>Open it in another browser on this device.</strong> Where both browsers expose the same values, the fingerprint id matches.</li>
+    </ol>
+
+    <details>
+      <summary>The full reading</summary>
+      <pre id="raw">reading...</pre>
+    </details>
+  </main>
+
+  <footer>
+    VisitoJS is open source under the MIT license. <a href="https://github.com/visitojs/visitojs#quick-start">Add it to your site</a>.
+  </footer>
+</div>
+
+<script src="visito.min.js"></script>
+<script>
+// ES5 on purpose: the demo should run wherever the library runs.
+(function () {
+  function put(id, text) { document.getElementById(id).textContent = text; }
+  function show(reading) {
+    if (!reading) {
+      var ids = ['did', 'id', 'strict', 'device', 'browser', 'flags', 'work', 'raw'];
+      for (var i = 0; i < ids.length; i++) put(ids[i], 'not available here (the page is inside a frame, or the browser is too old)');
+      return;
+    }
+    put('did', reading.did || 'this browser keeps neither a cookie nor localStorage');
+    put('did-state', reading.did ? (reading.didNew ? 'new in this browser' : 'seen before') : '');
+    put('id', reading.id || 'not available: a read failed');
+    put('id-state', reading.flags.weak ? 'weak' : '');
+    put('strict', reading.idStrict || 'not available');
+    put('device', (reading.model || 'this browser names no model') + ', ' + reading.os + (reading.osVer ? ' ' + reading.osVer : ''));
+    put('browser', reading.app + (reading.appVer ? ' ' + reading.appVer : ''));
+    var flags = [];
+    if (reading.flags.weak) flags.push('weak: no device model, so more devices share this fingerprint');
+    if (reading.flags.private === true) flags.push('private window');
+    if (reading.flags.auto.length) flags.push('automation: ' + reading.flags.auto.join(', '));
+    if (reading.flags.partial.length) flags.push('failed reads: ' + reading.flags.partial.join(', '));
+    put('flags', flags.length ? flags.join('; ') : 'none');
+    put('work', reading.ms + ' ms');
+    put('raw', JSON.stringify(reading, null, 2));
+  }
+  if (typeof Visito !== 'object') return show(null);
+  Visito.get(show);
+})();
+</script>
+</body>
+</html>

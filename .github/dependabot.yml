@@ -1,0 +1,28 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    # the build tools run in the release build; most malicious releases are found and pulled within days, so wait a week
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+    # one pull request for the minor and patch updates of the build tools; a major version still arrives on its own
+    groups:
+      build-tools:
+        update-types: [minor, patch]
+        patterns: ['*']
+    ignore:
+      # moves together with the image tag and digest in .github/workflows/ci.yml and lab/containers/browsers.Dockerfile
+      - dependency-name: playwright
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    # the actions are pinned by commit; Dependabot moves the SHA and the # vX.Y.Z comment beside it together
+    groups:
+      actions:
+        patterns: ['*']

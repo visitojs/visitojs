@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "VisitoJS test: hardware and screen spoofer",
+  "version": "1.0",
+  "description": "Test fixture for lab/marks.mjs: gives the page common hardware and screen values, on the navigator and screen objects themselves.",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["spoof.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    }
+  ]
+}

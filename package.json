@@ -1,0 +1,101 @@
+{
+  "name": "visitojs",
+  "version": "1.0.0",
+  "description": "Device identification in the browser: a stored id, a fingerprint id and flags for what could not be read. No network requests; core under 8 KB.",
+  "keywords": [
+    "device-identification",
+    "device-id",
+    "browser-fingerprint",
+    "fingerprint",
+    "fingerprinting",
+    "visitor-id",
+    "visitor-identification",
+    "fraud-prevention",
+    "automation-detection",
+    "in-app-browser",
+    "webview",
+    "privacy",
+    "cookie",
+    "localstorage",
+    "es5",
+    "typescript",
+    "no-dependencies",
+    "lightweight"
+  ],
+  "license": "MIT",
+  "author": "VisitoJS",
+  "homepage": "https://github.com/visitojs/visitojs#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/visitojs/visitojs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/visitojs/visitojs/issues"
+  },
+  "type": "module",
+  "main": "./dist/visito.esm.js",
+  "module": "./dist/visito.esm.js",
+  "types": "./dist/types/index.d.ts",
+  "unpkg": "./dist/visito.min.js",
+  "jsdelivr": "./dist/visito.min.js",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/visito.esm.js"
+    },
+    "./defer": {
+      "types": "./dist/types/defer.d.ts",
+      "default": "./dist/visito.defer.esm.js"
+    },
+    "./match": {
+      "types": "./dist/types/match.d.ts",
+      "default": "./dist/match.js"
+    },
+    "./deep": {
+      "types": "./dist/types/deep.d.ts",
+      "default": "./dist/deep.esm.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": [
+    "./dist/visito.esm.js"
+  ],
+  "files": [
+    "dist/visito.js",
+    "dist/visito.min.js",
+    "dist/visito.esm.js",
+    "dist/visito.defer.js",
+    "dist/visito.defer.min.js",
+    "dist/visito.defer.esm.js",
+    "dist/match.js",
+    "dist/deep.js",
+    "dist/deep.min.js",
+    "dist/deep.esm.js",
+    "dist/types/{api,deep,defer,did,env,guard,index,match,reading,reads,stages}.d.ts",
+    "docs",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "clean": "node -e \"const fs=require('fs');for(const d of ['build','dist'])for(const f of fs.existsSync(d)?fs.readdirSync(d):[])fs.rmSync(d+'/'+f,{recursive:true,force:true})\"",
+    "compile": "tsc -p tsconfig.json",
+    "bundle": "rollup -c && terser dist/visito.js --ecma 5 --safari10 -c hoist_funs=true,passes=2,inline=1,pure_getters=false -m --comments -o dist/visito.min.js && terser dist/visito.defer.js --ecma 5 --safari10 -c hoist_funs=true,passes=2,inline=1,pure_getters=false -m --comments -o dist/visito.defer.min.js && terser dist/visito.lab.js --ecma 5 --safari10 -c hoist_funs=true,passes=2,inline=1,pure_getters=false -m --comments -o dist/visito.lab.min.js && terser dist/deep.js --ecma 5 --safari10 -c hoist_funs=true,passes=2,inline=1,pure_getters=false -m --comments -o dist/deep.min.js",
+    "check": "es-check es5 dist/visito.js dist/visito.min.js dist/visito.defer.js dist/visito.defer.min.js dist/visito.lab.js dist/visito.lab.min.js dist/deep.js dist/deep.min.js && es-check es5 --module dist/visito.esm.js dist/visito.defer.esm.js dist/match.js dist/deep.esm.js && tsc -p test/types/tsconfig.json",
+    "build": "npm run clean && npm run compile && npm run bundle && npm run check",
+    "test": "npm run build && node --test \"test/*.test.mjs\"",
+    "prepublishOnly": "npm test"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "^24.0.0",
+      "onFail": "error"
+    }
+  },
+  "devDependencies": {
+    "es-check": "9.8.1",
+    "playwright": "1.63.0",
+    "rollup": "4.68.2",
+    "terser": "5.51.2",
+    "typescript": "5.9.3"
+  }
+}

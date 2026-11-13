@@ -1,0 +1,9 @@
+{
+  "name": "visitojs-check",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": false,
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },
+  "kv_namespaces": [{ "binding": "RESULTS", "id": "__KV_ID__" }],
+  "routes": [{ "pattern": "__HOST__", "custom_domain": true }]
+}

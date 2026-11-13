@@ -1,0 +1,241 @@
+name: Browser drift
+
+# The library tells the engine, and whether it is at the Safari 17 or Firefox 143 level, from feature tests (docs/DECISIONS.md,
+# "Engine detection"). A release that adds or removes one tested feature can change an answer with no change on our side, so once a week
+# lab/engines.mjs runs in the newest stable and pre-release builds with --evidence: every engine test the lab build records (x.ev.*) must
+# match the table in lab/engine-truth.mjs, and Firefox's permanent private browsing must still refuse getDirectory() (the private-window
+# canary). Nothing is opened or notified: CONTRIBUTING.md says who looks at a red run and what to do.
+#
+# What Playwright 1.63.0 can drive here: Chrome stable and beta, Edge stable, beta and dev, which it installs itself; Chrome dev and
+# canary, which it drives from /opt/google but does not install (Google's packages go in below, as Playwright's own script does for beta);
+# Mozilla's own Firefox stable, beta and nightly over WebDriver BiDi with a moz- channel, which it does not install either (Mozilla's
+# archives go in below). Left out: Edge canary, which Microsoft publishes for Linux only through its apt repository and for which
+# Playwright 1.63.0 has no Linux path; a Firefox beta of Playwright's own, which is no longer published; and any WebKit but the one each
+# Playwright version ships, so the newest WebKit comes from the newest Playwright packages.
+#
+# The private-window canary counts only in Playwright's own Firefox, where the run first shows that the session is private; in Mozilla's
+# builds it is printed as UNVERIFIED. That is why the gecko job ends with the newest Playwright's Firefox.
+#
+# Every install step and every harness step has its own timeout. A step that times out fails (it is not cancelled), so the steps after it
+# still run, and one browser that fails to install or hangs hides no other. The runner image is pinned, so a red run is a browser and not
+# a new image; the Linux values are to be recorded in docs/DECISIONS.md with the image name after the first run.
+on:
+  schedule:
+    # Mondays 04:23 UTC: after the weekend's nightly builds, and off the hour, when scheduled runs queue longest
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# a manual run while the scheduled one is going waits for it instead of cancelling it
+concurrency:
+  group: browser-drift-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  blink:
+    name: Blink (Chromium, Chrome, Edge)
+    runs-on: ubuntu-24.04
+    # the steps' own limits add up to more; this leaves room for one hung step on top of a normal run
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts
+        timeout-minutes: 6
+      - id: build
+        timeout-minutes: 5
+        run: npm run build && mkdir -p lab/report/raw
+      # every step below runs whatever happened to the one before it
+      - id: chromium
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 6
+        run: npx playwright install --with-deps chromium
+      - name: Chromium, the build Playwright pins
+        if: ${{ !cancelled() && steps.chromium.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node lab/engines.mjs chromium --evidence
+      - id: chrome
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 6
+        run: npx playwright install chrome
+      - name: Chrome stable
+        if: ${{ !cancelled() && steps.chrome.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node lab/engines.mjs chromium --evidence --channel chrome
+      - id: chrome-beta
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 6
+        run: npx playwright install chrome-beta
+      - name: Chrome beta
+        if: ${{ !cancelled() && steps.chrome-beta.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node lab/engines.mjs chromium --evidence --channel chrome-beta
+      # Playwright drives chrome-dev from /opt/google/chrome-unstable but has no installer for it: the same package source as its beta script
+      - id: chrome-dev
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 6
+        run: |
+          curl -fsSL --proto '=https' --proto-redir '=https' -o "$RUNNER_TEMP/chrome-dev.deb" https://dl.google.com/linux/direct/google-chrome-unstable_current_amd64.deb
+          sudo apt-get install -y "$RUNNER_TEMP/chrome-dev.deb"
+          google-chrome-unstable --version
+      - name: Chrome dev
+        if: ${{ !cancelled() && steps.chrome-dev.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node lab/engines.mjs chromium --evidence --channel chrome-dev
+      # the same for chrome-canary, driven from /opt/google/chrome-canary. It is a daily build: a failure here is run again before it is read
+      - id: chrome-canary
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 6
+        run: |
+          curl -fsSL --proto '=https' --proto-redir '=https' -o "$RUNNER_TEMP/chrome-canary.deb" https://dl.google.com/linux/direct/google-chrome-canary_current_amd64.deb
+          sudo apt-get install -y "$RUNNER_TEMP/chrome-canary.deb"
+          google-chrome-canary --version
+      - name: Chrome canary
+        if: ${{ !cancelled() && steps.chrome-canary.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node lab/engines.mjs chromium --evidence --channel chrome-canary
+      - id: msedge
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 6
+        run: npx playwright install msedge
+      - name: Edge stable
+        if: ${{ !cancelled() && steps.msedge.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node lab/engines.mjs chromium --evidence --channel msedge
+      - id: msedge-beta
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 6
+        run: npx playwright install msedge-beta
+      - name: Edge beta
+        if: ${{ !cancelled() && steps.msedge-beta.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node lab/engines.mjs chromium --evidence --channel msedge-beta
+      - id: msedge-dev
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 6
+        run: npx playwright install msedge-dev
+      - name: Edge dev
+        if: ${{ !cancelled() && steps.msedge-dev.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node lab/engines.mjs chromium --evidence --channel msedge-dev
+
+  gecko:
+    name: Gecko (Firefox, with the private-window canary)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts
+        timeout-minutes: 6
+      - id: build
+        timeout-minutes: 5
+        run: npm run build && mkdir -p lab/report/raw
+      # also the system libraries Mozilla's builds below need
+      - id: firefox
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 6
+        run: npx playwright install --with-deps firefox
+      - name: Firefox, the build Playwright pins
+        if: ${{ !cancelled() && steps.firefox.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node lab/engines.mjs firefox --evidence
+      # Mozilla's current archive for each channel, unpacked under the runner's temporary folder; nothing is installed system-wide
+      - id: mozilla
+        if: ${{ !cancelled() && steps.firefox.outcome == 'success' }}
+        timeout-minutes: 6
+        run: |
+          for channel in firefox firefox-beta firefox-nightly; do
+            mkdir -p "$RUNNER_TEMP/$channel"
+            curl -fsSL --proto '=https' --proto-redir '=https' -o "$RUNNER_TEMP/$channel.tar" "https://download.mozilla.org/?product=$channel-latest-ssl&os=linux64&lang=en-US"
+            tar -xf "$RUNNER_TEMP/$channel.tar" -C "$RUNNER_TEMP/$channel"
+            "$RUNNER_TEMP/$channel/firefox/firefox" --version
+          done
+      # over WebDriver BiDi the drift table counts as it does anywhere else; the private-window canary is printed as UNVERIFIED
+      - name: Firefox stable
+        if: ${{ !cancelled() && steps.mozilla.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node lab/engines.mjs firefox --evidence --channel moz-firefox --executable "$RUNNER_TEMP/firefox/firefox/firefox"
+      - name: Firefox beta
+        if: ${{ !cancelled() && steps.mozilla.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node lab/engines.mjs firefox --evidence --channel moz-firefox-beta --executable "$RUNNER_TEMP/firefox-beta/firefox/firefox"
+      - name: Firefox nightly
+        if: ${{ !cancelled() && steps.mozilla.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node lab/engines.mjs firefox --evidence --channel moz-firefox-nightly --executable "$RUNNER_TEMP/firefox-nightly/firefox/firefox"
+      # the newest Firefox that Playwright builds itself, where the canary counts. It replaces the pinned package in this job only, without
+      # scripts and without changing package.json, so it runs last; the job has no token and no secrets
+      - id: next
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 6
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@next
+          npx playwright --version
+          npx playwright install --with-deps firefox
+      - name: Firefox of Playwright's next build
+        if: ${{ !cancelled() && steps.next.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node lab/engines.mjs firefox --evidence
+
+  webkit:
+    name: WebKit (pinned, latest and next Playwright)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts
+        timeout-minutes: 6
+      - id: build
+        timeout-minutes: 5
+        run: npm run build && mkdir -p lab/report/raw
+      - id: webkit
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 6
+        run: npx playwright install --with-deps webkit
+      - name: WebKit, the build Playwright pins
+        if: ${{ !cancelled() && steps.webkit.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node lab/engines.mjs webkit --evidence
+      # Playwright reports its own WebKit version for any WebKit binary, so a newer WebKit runs with the Playwright release that ships it.
+      # These replace the pinned package in this job only, without scripts; the job has no token and no secrets
+      - id: latest
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 6
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@latest
+          npx playwright --version
+          npx playwright install --with-deps webkit
+      - name: WebKit of the latest Playwright release
+        if: ${{ !cancelled() && steps.latest.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node lab/engines.mjs webkit --evidence
+      - id: next
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 6
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@next
+          npx playwright --version
+          npx playwright install --with-deps webkit
+      - name: WebKit of Playwright's next build
+        if: ${{ !cancelled() && steps.next.outcome == 'success' }}
+        timeout-minutes: 5
+        run: node lab/engines.mjs webkit --evidence
