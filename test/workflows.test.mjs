@@ -382,7 +382,9 @@ test('the publish job holds the npm credential alone: no checkout, no install, n
   const text = runs(publish)
   assert.doesNotMatch(text, /npm (ci|install|i|test|run|rebuild|exec|x)\b|npx /)
   assert.match(text, /sha256sum -c/)
-  assert.match(text, /npm publish "out\/visitojs-\$VERSION\.tgz"/)
+  // the leading ./ matters: npm reads a bare "out/name.tgz" as the GitHub shorthand owner/repo and tries to clone it
+  assert.match(text, /npm publish "\.\/out\/visitojs-\$VERSION\.tgz"/)
+  assert.doesNotMatch(text, /npm publish "out\//)
   assert.match(text, /dist\.integrity/)
   assert.ok(usesOf(publish).some((uses) => /^actions\/download-artifact@/.test(uses)))
 })

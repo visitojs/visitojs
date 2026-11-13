@@ -134,7 +134,8 @@ jobs:
           if npm view "visitojs@$VERSION" version >/dev/null 2>&1; then
             echo "visitojs@$VERSION is already published; the next step checks that it is this build"
           else
-            npm publish "out/visitojs-$VERSION.tgz" --access public --tag "$tag" --ignore-scripts
+            # ./ so that npm takes it for a file: a bare "out/name.tgz" is read as the GitHub shorthand owner/repo
+            npm publish "./out/visitojs-$VERSION.tgz" --access public --tag "$tag" --ignore-scripts
           fi
       - name: The registry serves the tarball that was built and tested
         env:
