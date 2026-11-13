@@ -16,6 +16,9 @@ const SYMLINKS = (() => {
   try { symlinkSync('x', join(dir, 'probe')); return true } catch { return false }
 })()
 const needsLinks = { skip: !SYMLINKS && 'this system does not let an unprivileged user make symbolic links' }
+// An absolute link target such as /usr/lib is a POSIX path. Windows stores it as a drive path (D:\usr\lib), so the test that reads one
+// back holds only where the unpacker runs: on Linux, under run.sh
+const needsPosixLinks = { skip: process.platform === 'win32' ? 'Windows rewrites an absolute link target to a drive path; the unpacker runs on Linux' : needsLinks.skip }
 
 // split the archive at odd offsets, as a network stream would
 async function* chunks(buffer, size = 700) { for (let i = 0; i < buffer.length; i += size) yield buffer.subarray(i, i + size) }
@@ -134,7 +137,7 @@ test('a later entry replaces what is at its path', async () => {
   assert.equal(readFileSync(join(root, 'b/y'), 'utf8'), 'y')
 })
 
-test('symbolic links are made as they are and are resolved inside the root, never outside it', needsLinks, async () => {
+test('symbolic links are made as they are and are resolved inside the root, never outside it', needsPosixLinks, async () => {
   const root = newRoot()
   const outside = join(dir, 'outside')
   mkdirSync(outside, { recursive: true })
