@@ -129,7 +129,7 @@ The deferred build, `visito.defer.min.js` or `visitojs/defer`, loads without rea
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/visitojs@1.0.0/dist/visito.defer.min.js"
-        integrity="sha384-<the SHA-384 of that file>"
+        integrity="sha384-Y1uZwPXPBTt/rPXpZ90GI7p/4fNFCmT+OJJ8zQ4BFvv0TL/CU42wzPdBjbKfbslP"
         crossorigin="anonymous"></script>
 <script>
   Visito.get(function (visitor) { if (visitor) sendToServer(visitor) })  // runs once start() has run
@@ -217,7 +217,9 @@ A candidate whose `v` differs from the reading's neither fits nor contradicts: i
 It is a separate file with its own global. The core build reads no canvas or audio and does not change when you add it; "under 8 KB" is the core alone, and the deep entry adds its own 6,402 bytes gzipped ([README, Entries](../README.md#entries)).
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/visitojs@1.0.0/dist/deep.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/visitojs@1.0.0/dist/deep.min.js"
+        integrity="sha384-hyQRhN2+g1qJbmQVsq0AwhZknkYhvw8LIJq2PLNmZ3oCa0RpqROER/WTYrM261ap"
+        crossorigin="anonymous"></script>
 <script>
   // a content blocker may keep the file from loading
   if (window.VisitoDeep) VisitoDeep.get(function (deep) {

@@ -23,7 +23,7 @@ From the CDN:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/visitojs@1.0.0/dist/visito.min.js"
-        integrity="sha384-<the value in the v1.0.0 release notes>"
+        integrity="sha384-tRACvKo0CYtFU1/Ku84LiHwYALdV9Qxc7ZWmqGw8lkqfKUqlnkj/ROePV2J2ZgZZ"
         crossorigin="anonymous"></script>
 <script>
   Visito.get(function (visitor) {
