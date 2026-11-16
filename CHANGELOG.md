@@ -4,6 +4,15 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-16
+
+The code is the same: every file in `dist/` is byte for byte the one 1.0.0 shipped, so no id changes and the integrity values are the ones 1.0.0 had.
+
+### Changed
+
+- The README in the package has the logo, a size badge with the measured figure and the integrity value in the CDN snippet.
+- The CDN snippets for the deferred build and the deep entry in `docs/API.md` carry their integrity values.
+
 ## [1.0.0] - 2026-11-13
 
 ### Changed

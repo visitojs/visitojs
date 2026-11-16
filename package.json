@@ -1,6 +1,6 @@
 {
   "name": "visitojs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Device identification in the browser: a stored id, a fingerprint id and flags for what could not be read. No network requests; core under 8 KB.",
   "keywords": [
     "device-identification",
