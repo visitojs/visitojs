@@ -5,7 +5,7 @@ title: VisitoJS
 abstract: "Device identification in the browser: a stored id, a fingerprint id and flags for what could not be read. No network requests."
 authors:
   - name: VisitoJS
-version: 1.0.0
+version: 1.0.1
 license: MIT
 repository-code: "https://github.com/visitojs/visitojs"
 url: "https://visitojs.github.io/visitojs/"

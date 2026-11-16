@@ -27,7 +27,7 @@
 From the CDN:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/visitojs@1.0.0/dist/visito.min.js"
+<script src="https://cdn.jsdelivr.net/npm/visitojs@1.0.1/dist/visito.min.js"
         integrity="sha384-tRACvKo0CYtFU1/Ku84LiHwYALdV9Qxc7ZWmqGw8lkqfKUqlnkj/ROePV2J2ZgZZ"
         crossorigin="anonymous"></script>
 <script>
