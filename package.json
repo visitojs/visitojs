@@ -92,10 +92,10 @@
     }
   },
   "devDependencies": {
-    "es-check": "9.8.1",
+    "es-check": "9.9.0",
     "playwright": "1.63.0",
-    "rollup": "4.68.2",
-    "terser": "5.51.2",
+    "rollup": "4.68.7",
+    "terser": "5.51.3",
     "typescript": "5.9.3"
   }
 }
